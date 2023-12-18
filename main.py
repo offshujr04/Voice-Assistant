@@ -1,9 +1,13 @@
+import os
 import os.path
 import win32com.client
 import speech_recognition as sr
 import tkinter as tk
 import datetime
 import screen_brightness_control as brightness_control
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 speaker = win32com.client.Dispatch("SAPI.SpVoice")
 s = "Wassup"
@@ -60,7 +64,45 @@ def brightness():
 
 
 def volume():
-    pass
+    question = "Volume value?"
+    speaker.Speak(question)
+    print(question)
+    user_input = command()
+    user_input = int(user_input)
+    new_volume = (0.65*user_input)-65
+    try:
+        # Volume value not correctly being set
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(
+            IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        volume_ = cast(interface, POINTER(IAudioEndpointVolume))
+        volume_.SetMasterVolumeLevel(new_volume, None)
+        print("No")
+    except:
+        print("There's some error")
+
+# Shutting down
+
+
+def closing(inp_x):
+    if inp_x == "s":
+        try:
+            print("Shutting down")
+            os.system("shutdown /s /t 15")
+        except:
+            print("There is some issue")
+    elif inp_x == "r":
+        try:
+            print("Shutting down")
+            os.system("shutdown /r")
+        except:
+            print("There is some error")
+    else:
+        try:
+            print("Logging out")
+            os.system("shutdown /l")
+        except:
+            print("There is some error")
 
 # Run tasks by calling different functions
 
@@ -84,6 +126,13 @@ def assistant():
                 brightness()
             elif "volume" in voice_input.lower():
                 volume()
+            elif "shutdown" in voice_input.lower() or "restart" in voice_input.lower() or "logout" in voice_input.lower():
+                if "shutdown" in voice_input.lower():
+                    closing("s")
+                elif "restart" in voice_input.lower():
+                    closing("r")
+                elif "logout" in voice_input.lower():
+                    closing("l")
         pass
 
 
